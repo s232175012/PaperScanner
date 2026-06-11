@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scan Paper → Text</title>
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+    <style>
+        body { background: #0a0a0a; color: white; text-align: center; padding: 20px; font-family: Arial; }
+        video, canvas { border: 3px solid #4ade80; border-radius: 15px; max-width: 100%; margin: 10px; }
+        button { background: #d97706; color: white; border: none; padding: 15px 30px; 
+                 border-radius: 10px; font-size: 16px; margin: 5px; cursor: pointer; }
+        #output { background: #1a1a1a; padding: 20px; border-radius: 10px; margin-top: 20px; 
+                  text-align: left; white-space: pre-wrap; min-height: 100px; }
+        .loading { color: #4ade80; }
+    </style>
+</head>
+<body>
+    <h1>📄 Scan Written Paper</h1>
+    
+    <video id="video" autoplay playsinline></video>
+    <br>
+    <button onclick="startCamera()">1. Start Camera</button>
+    <button onclick="scanPaper()">2. Scan Paper</button>
+    
+    <canvas id="canvas" style="display:none;"></canvas>
+    
+    <h3>Extracted Text:</h3>
+    <div id="output">Point camera at paper and click Scan</div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const output = document.getElementById('output');
+
+        function startCamera() {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                .then(stream => video.srcObject = stream)
+                .catch(err => alert('Camera error: ' + err));
+        }
+
+        async function scanPaper() {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            
+            output.innerHTML = '<span class="loading">Scanning... this takes 5-10 seconds</span>';
+            
+            const result = await Tesseract.recognize(
+                canvas,
+                'eng', // 'eng' for English. Use 'afr' for Afrikaans
+                { logger: m => console.log(m) }
+            );
+            
+            output.textContent = result.data.text;
+        }
+    </script>
+</body>
+</html>
